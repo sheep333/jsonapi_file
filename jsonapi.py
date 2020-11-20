@@ -45,27 +45,37 @@ def exec():
     os.makedirs(f"{BASE_DIR}{jsonl_path}", exist_ok=True)
 
     for element in elements:
+        index = 0
         url = element.get_attribute("href")
         if url.startswith(DOMAIN):
             try:
-                req = request.Request(f"{url}")
-                req.add_header("Cookie", f"{cookies[0]['name']}={cookies[0]['value']}")
-                req.add_header("Accept", "application/json")
-                response = request.urlopen(req)
-                print('url:', response.geturl())
-                content = response.read()
-                decode_content = content.decode("utf8")
-                suffix = url.split('/')[-2]
-                file_name = url.split('/')[-1]
-                with open(f"{BASE_DIR}{json_path}{suffix}__{file_name}.json", 'wb') as f:
-                    f.write(content)
-                with open(f"{BASE_DIR}{decode_json_path}{suffix}__{file_name}.json", 'w') as f:
+                while url:
+                    req = request.Request(f"{url}")
+                    base_url = url.split('?')
+                    base_url = base_url[0]
+                    suffix = base_url.split('/')[-2]
+                    file_name = base_url.split('/')[-1]
+                    req.add_header("Cookie", f"{cookies[0]['name']}={cookies[0]['value']}")
+                    req.add_header("Accept", "application/json")
+                    response = request.urlopen(req)
+                    print('url:', response.geturl())
+                    content = response.read()
+                    decode_content = content.decode("utf8")
                     json_content = json.loads(decode_content)
-                    json.dump(json_content, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
-                with jsonlines.open(f'{BASE_DIR}{jsonl_path}{file_name}.jsonl', mode='w') as f:
-                    json_content = json.loads(decode_content)
-                    f.write(json_content)
-                response.close()
+                    with open(f"{BASE_DIR}{json_path}{suffix}__{file_name}_{index}.json", 'wb') as f:
+                        f.write(content)
+                    with open(f"{BASE_DIR}{decode_json_path}{suffix}__{file_name}_{index}.json", 'w') as f:
+                        json.dump(json_content, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
+                    with jsonlines.open(f'{BASE_DIR}{jsonl_path}{file_name}_{index}.jsonl', mode='w') as f:
+                        f.write(json_content)
+
+                    try:
+                        url = json_content["links"]["next"]["href"]
+                        index += 1
+                    except KeyError:
+                        url = None
+
+                    response.close()
             except Exception:
                 print(f"Exception raised in url:{url}")
                 continue
