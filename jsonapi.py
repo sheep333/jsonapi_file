@@ -3,13 +3,16 @@ import os
 import time
 from urllib import request
 
-import jsonlines
+# import jsonlines
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 BASE_DIR = os.getenv("BASE_DIR", './output/')
+RAW_JSON_DIR = os.getenv("RAW_JSON_DIR", "json_outputs/")
+DECODE_JSON_DIR = os.getenv("DECODE_JSON_DIR", "decode_json_outputs/")
+JSONLINES_DIR = os.getenv("JSONLINES_DIR", "jsonl_outputs/")
 DOMAIN = os.getenv("DOMAIN")
 NAME = os.getenv("NAME")
 PASS = os.getenv("PASS")
@@ -37,12 +40,9 @@ def exec():
     WebDriverWait(driver, 30).until(expected_conditions.presence_of_element_located((By.TAG_NAME, "a")))
     elements = driver.find_elements_by_css_selector("a")
 
-    json_path = "json_outputs/"
-    os.makedirs(f"{BASE_DIR}{json_path}", exist_ok=True)
-    decode_json_path = "decode_json_outputs/"
-    os.makedirs(f"{BASE_DIR}{decode_json_path}", exist_ok=True)
-    jsonl_path = "jsonl_outputs/"
-    os.makedirs(f"{BASE_DIR}{jsonl_path}", exist_ok=True)
+    # os.makedirs(f"{BASE_DIR}{RAW_JSON_DIR}", exist_ok=True)
+    os.makedirs(f"{BASE_DIR}{DECODE_JSON_DIR}", exist_ok=True)
+    # os.makedirs(f"{BASE_DIR}{JSONLINES_DIR}", exist_ok=True)
 
     for element in elements:
         index = 0
@@ -51,8 +51,8 @@ def exec():
             try:
                 while url:
                     req = request.Request(f"{url}")
-                    base_url = url.split('?')
-                    base_url = base_url[0]
+                    split_url = url.split('?')
+                    base_url = split_url[0]
                     suffix = base_url.split('/')[-2]
                     file_name = base_url.split('/')[-1]
                     req.add_header("Cookie", f"{cookies[0]['name']}={cookies[0]['value']}")
@@ -62,12 +62,12 @@ def exec():
                     content = response.read()
                     decode_content = content.decode("utf8")
                     json_content = json.loads(decode_content)
-                    with open(f"{BASE_DIR}{json_path}{suffix}__{file_name}_{index}.json", 'wb') as f:
-                        f.write(content)
-                    with open(f"{BASE_DIR}{decode_json_path}{suffix}__{file_name}_{index}.json", 'w') as f:
+                    # with open(f"{BASE_DIR}{RAW_JSON_DIR}{suffix}__{file_name}_{str(index).zfill(5)}.json", 'wb') as f:
+                    #    f.write(content)
+                    with open(f"{BASE_DIR}{DECODE_JSON_DIR}{suffix}__{file_name}_{str(index).zfill(5)}.json", 'w') as f:
                         json.dump(json_content, f, ensure_ascii=False, indent=4, sort_keys=True, separators=(',', ': '))
-                    with jsonlines.open(f'{BASE_DIR}{jsonl_path}{file_name}_{index}.jsonl', mode='w') as f:
-                        f.write(json_content)
+                    # with jsonlines.open(f'{BASE_DIR}{JSONLINES_DIR}{file_name}_{str(index).zfill(5)}.jsonl', mode='w') as f:
+                    #     f.write(json_content)
 
                     try:
                         url = json_content["links"]["next"]["href"]

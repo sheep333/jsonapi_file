@@ -3,6 +3,8 @@ import json
 
 
 BASE_DIR = os.getenv("BASE_DIR", "./output/")
+INPUT_DIR = os.getenv("INPUT_DIR", "decode_json_outputs/")
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", "clean_json/")
 DELETE_KEYS = os.getenv("DELETE_KEY_LIST").split(',')
 
 
@@ -24,9 +26,9 @@ def scrub(obj, del_key="del_key"):
 
 
 def main():
-    path = f"{BASE_DIR}json_outputs/"
+    path = f"{BASE_DIR}{INPUT_DIR}"
     files = os.listdir(path)
-    output_path = f"{BASE_DIR}clean_json/"
+    output_path = f"{BASE_DIR}{OUTPUT_DIR}"
     os.makedirs(output_path, exist_ok=True)
 
     for f in files:
